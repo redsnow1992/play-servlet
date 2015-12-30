@@ -93,13 +93,13 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
       }
 
       def onDataAvailable() {
-        Logger("play.war.servlet31").trace(s"onDataAvailable")
+        Logger("play.servlet31").trace(s"onDataAvailable")
         onDataAvailableCalled = true
         iteratee = iteratee.pureFlatFold { step =>
 
           // consume the http body in any case
           val chunk = consumeBody(servletInputStream, buffer)
-          Logger("play.war.servlet31").trace(s"consumes ${chunk.length} bytes")
+          Logger("play.servlet31").trace(s"consumes ${chunk.length} bytes")
 
           val nextStep = step match {
             case Step.Cont(k) => k(El(chunk))
@@ -107,9 +107,9 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
           }
 
           if (servletInputStream.isFinished) {
-            Logger("play.war.servlet31").trace("will extract result from nextStep")
+            Logger("play.servlet31").trace("will extract result from nextStep")
             result.completeWith(nextStep.run.andThen { case _ =>
-              Logger("play.war.servlet31").trace("extract result from nextStep")
+              Logger("play.servlet31").trace("extract result from nextStep")
             }(exContext))
           }
           nextStep
@@ -118,18 +118,18 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
       }
 
       def onAllDataRead() {
-        Logger("play.war.servlet31").trace("onAllDataRead")
+        Logger("play.servlet31").trace("onAllDataRead")
         if (!onDataAvailableCalled) {
           // some containers, like Jetty, call directly onAllDataRead without calling onDataAvailable
           // when no data should be consumed
           result.completeWith(iteratee.run.andThen { case _ =>
-            Logger("play.war.servlet31").trace("onAllDataRead: extract result from iteratee")
+            Logger("play.servlet31").trace("onAllDataRead: extract result from iteratee")
           }(exContext))
         }
       }
 
       def onError(t: Throwable) {
-        Logger("play.war.servlet31").trace("onError", t)
+        Logger("play.servlet31").trace("onError", t)
         result.failure(t)
       }
     }
@@ -161,15 +161,15 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
     val futureIteratee = iterateeP.future
 
     @volatile var chunked = true
-    Logger("play.war.servlet31").trace("set write listener")
+    Logger("play.servlet31").trace("set write listener")
 
     private def step(): Iteratee[Array[Byte], Unit] = {
-      Logger("play.war.servlet31").trace(s"step")
+      Logger("play.servlet31").trace(s"step")
       iterateeP = Promise[Iteratee[Array[Byte], Unit]]()
 
       Cont[Array[Byte], Unit] {
         case Input.EOF =>
-          Logger("play.war.servlet31").trace(s"EOF, finished!")
+          Logger("play.servlet31").trace(s"EOF, finished!")
           if (out.isReady) {
             out.flush()
           }
@@ -178,7 +178,7 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
           Done[Array[Byte], Unit](Unit)
 
         case Input.Empty =>
-          Logger("play.war.servlet31").trace(s"empty, just continue")
+          Logger("play.servlet31").trace(s"empty, just continue")
           step()
 
         case Input.El(buffer) =>
@@ -187,7 +187,7 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
             // flush to send chunked content, like comet message
             out.flush()
           }
-          Logger("play.war.servlet31").trace(s"send ${buffer.length} bytes. out.isReady=${out.isReady}")
+          Logger("play.servlet31").trace(s"send ${buffer.length} bytes. out.isReady=${out.isReady}")
           if (out.isReady) {
             // can immediately push the next bytes
             step()
@@ -199,7 +199,7 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
     }
 
     override def onWritePossible(): Unit = {
-      Logger("play.war.servlet31").trace("onWritePossible - begin")
+      Logger("play.servlet31").trace("onWritePossible - begin")
       if (iterateeP.isCompleted) {
         throw new Exception("race condition: the servlet container should not call onWritePossible() when the iteratee is completed. Please report.")
       }
@@ -209,7 +209,7 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
     }
 
     override def onError(t: Throwable): Unit = {
-      Logger("play.war.servlet31").error("error while writing result to servlet output stream", t)
+      Logger("play.servlet31").error("error while writing result to servlet output stream", t)
       onHttpResponseComplete()
       cleanup()
     }
@@ -221,7 +221,7 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
         val status = result.header.status
         val headers = result.header.headers
 
-        Logger("play.war.servlet31").trace("Sending simple result: " + result)
+        Logger("play.servlet31").trace("Sending simple result: " + result)
 
         httpResponse.setStatus(status)
 
@@ -229,7 +229,7 @@ class Play2Servlet31RequestHandler(servletRequest: HttpServletRequest)
 
         chunked = headers.exists { case (key, value) => key.equalsIgnoreCase(HeaderNames.TRANSFER_ENCODING) && value == HttpProtocol.CHUNKED }
 
-        Logger("play.war.servlet31").trace(s"the body iteratee is ready. chunked=$chunked")
+        Logger("play.servlet31").trace(s"the body iteratee is ready. chunked=$chunked")
         if (chunked) {
           // if the result body is chunked, the chunks are already encoded with metadata in Results.chunk
           // The problem is that the servlet container adds metadata again, leading the chunks encoded 2 times.
