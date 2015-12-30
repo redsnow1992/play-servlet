@@ -15,14 +15,14 @@ object Play2WarServer {
 
   var playServer: Option[Play2WarServer] = None
 
-  def apply(contextPath: Option[String] = None) = {
+  def apply(contextPath: Option[String] = None, mode: Mode.Mode = Mode.Dev) = {
 
-    playServer = Option(new Play2WarServer(new WarApplication(Mode.Prod, contextPath)))
+    playServer = Option(new Play2WarServer(new WarApplication(mode, contextPath)))
 
   }
 
   val context = ApplicationLoader.createContext(
-    new Environment(new File("."), ApplicationLoader.getClass.getClassLoader, Mode.Prod))
+    new Environment(new File("."), ApplicationLoader.getClass.getClassLoader, playServer.map(_.mode).getOrElse(Mode.Dev)))
   Logger.configure(context.environment)
 
   lazy val configuration = Play.current.configuration
