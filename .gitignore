@@ -10,3 +10,6 @@ project/target
 bin
 .idea
 .idea_modules
+.cache-main
+.ensime
+.ensime_cache/
