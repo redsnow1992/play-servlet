@@ -26,7 +26,7 @@ abstract class GenericPlay2Servlet extends HttpServlet with ServletContextListen
 
   override def contextInitialized(e: ServletContextEvent): Unit = {
     e.getServletContext.log("PlayServletWrapper > contextInitialized")
-    val currentMode: String = Option(e.getServletContext.getInitParameter("play.mode")).getOrElse(Mode.Dev.toString)
+    val currentMode: String = Option(e.getServletContext.getInitParameter("play.mode")).getOrElse(Mode.Prod.toString)
     e.getServletContext.log(s"app runs in ${currentMode} mode")
     // Init or get singleton
     // val Dev, Test, Prod = Value
