@@ -6,7 +6,7 @@ require "fileutils"
 
 def play2war(project_name, project_path, servlet_jar_path, war_dir)
   FileUtils.cd(project_path, verbose: true)
-  cmd = "sbt dist"
+  cmd = "sbt clean dist"
   puts cmd
   system(cmd)
   FileUtils.cd(File.join(project_path, "target/universal"), verbose: true)
